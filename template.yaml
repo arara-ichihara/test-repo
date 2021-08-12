@@ -153,7 +153,7 @@ Resources:
         Type: AWS
         IntegrationHttpMethod: GET
         Credentials: !GetAtt S3AccessRole.Arn
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/tama-csv-backet/test.csv"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/yoppy-csv-log/yoppy_latest.csv"
         IntegrationResponses:
           - StatusCode: 200 # backendのプロセスが完了した時のレスポンスコード
       MethodResponses:
