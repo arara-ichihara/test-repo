@@ -5,7 +5,7 @@ Resources:
   HelloYoppytest1:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: yutomen_function.lambda_handler
+      Handler: yutomen_function.lambda_handler # 修正w
       Runtime: python3.8
       FunctionName: HelloYoppyPipeTest-yuto
       CodeUri: yutomen_function.py
