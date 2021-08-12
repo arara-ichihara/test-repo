@@ -71,8 +71,6 @@ Resources:
     Properties: 
       Name: "yoppy-api" 
       EndpointConfiguration: # 作成時にデフォルトでリージョンに設定。VPCの中に設置するのでエンドポイントなどは使わないためPRIVATEにしない
-#         Types:
-#         - "REGIONAL"
         Types:
         - "PRIVATE"
       VpcEndpointIds:
