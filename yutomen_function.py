@@ -1,5 +1,3 @@
-import sys, codecs
-sys.stdout = codecs.getwriter("utf-8")(sys.stdout)
 import json
 
 def lambda_handler(event, context):
