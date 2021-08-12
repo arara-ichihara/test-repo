@@ -21,10 +21,10 @@ Resources:
   HelloYoppytest3:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: tama_function.lambda_handler　
+      Handler: tama_function.lambda_handler
       Runtime: python3.8
-      FunctionName: HelloYoppyTest-tama　
-      CodeUri: tama_function.py　
+      FunctionName: HelloYoppyTest-tama
+      CodeUri: tama_function.py
 
 
 
@@ -32,9 +32,9 @@ Resources:
   APIgatewayPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref 'HelloYoppytest1'　
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref 'HelloYoppytest1'
+      Action: lambda:InvokeFunction # principalがlambdaにどんな行動をするか
+      Principal: apigateway.amazonaws.com # api-gatewayがlambdaを呼び出す
 
 
   S3AccessRole:
@@ -49,7 +49,7 @@ Resources:
             - apigateway.amazonaws.com
           Action:
           - sts:AssumeRole
-
+      # ロールに使われるポリシーを指定
       Description: allows yoppy-api to access to S3
       # s3のフルアクセス権限
       Policies:
@@ -59,37 +59,20 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-            - s3:Get*
+            - s3:Get* # S3からオブジェクトを取得する許可
             - s3:List*
             Resource : "*" 
       RoleName: yoppy_api_role
 
     
 
-  ApiGatewayRestApi: 
+  ApiGatewayRestApi:  #trong変更
     Type: AWS::ApiGateway::RestApi
     Properties: 
       Name: "yoppy-api" 
-      EndpointConfiguration:
+      EndpointConfiguration: # 作成時にデフォルトでリージョンに設定。VPCの中に設置するのでエンドポイントなどは使わないためPRIVATEにしない
         Types:
-          - "PRIVATE"
-        VpcEndpointIds:
-          - "vpce-0a8244b81e7b4a1b7"
-      Policy:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Deny
-          Principal: "*"
-          Action: execute-api:Invoke
-          Resource: "execute-api:/*/*/*"
-          Condition:
-            StringNotEquals:
-              aws:SourceVpce: vpce-0a8244b81e7b4a1b7
-              aws:SourceVpc: vpc-d234deb7
-        - Effect: Allow
-          Principal: "*"
-          Action: execute-api:Invoke
-          Resource: "execute-api:/*/*/*"
+          - "REGIONAL"
 
       Policy:
         Version: 2012-10-17
@@ -146,7 +129,7 @@ Resources:
       Integration: # httpではなくlambdaを選択するため例とは異なる
         Type: AWS
         IntegrationHttpMethod: POST # MOCK以外は必須
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloYoppytest1.Arn}/invocations" # 修正
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloYoppytest1.Arn}/invocations"
         IntegrationResponses:
           - StatusCode: 200 # backendのプロセスが完了した時のレスポンスコード
       MethodResponses:
@@ -155,7 +138,7 @@ Resources:
           text/csv: Empty # content_type: model
         ResponseParameters:
           method.response.header.Access-Control-Allow-Origin: true
-  ApiGatewayLatestMethod:
+  ApiGatewayLatestMethod: # 変更
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref ApiGatewayRestApi
@@ -166,7 +149,7 @@ Resources:
         Type: AWS
         IntegrationHttpMethod: GET
         Credentials: !GetAtt S3AccessRole.Arn
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/yoppy-csv-log/yoppy_latest.csv"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/tama-csv-backet/test.csv"
         IntegrationResponses:
           - StatusCode: 200 # backendのプロセスが完了した時のレスポンスコード
       MethodResponses:
@@ -175,7 +158,7 @@ Resources:
           text/csv: Empty # content_type: model
         ResponseParameters:
           method.response.header.Access-Control-Allow-Origin: true
-  ApiGatewayElectedMethod:
+  ApiGatewayElectedMethod: # trong変更
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref ApiGatewayRestApi #上のコードを参照する
@@ -185,7 +168,7 @@ Resources:
       Integration: # httpではなくlambdaを選択するため例とは異なる
         Type: AWS
         IntegrationHttpMethod: POST #要確認
-        Uri: !Sub arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:476861174977:function:HelloYoppyTest-tuan/invocations 　# 修正
+        Uri: !Sub arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:476861174977:function:HelloYoppyTest-tuan/invocations
         IntegrationResponses:
           - StatusCode: 200 
             ResponseParameters:
@@ -198,7 +181,7 @@ Resources:
           application/json: 'Empty'
         ResponseParameters:
           method.response.header.Access-Control-Allow-Origin: true
-  ApiGatewayOptionsMethod:
+  ApiGatewayOptionsMethod: # trong変更
     Type: AWS::ApiGateway::Method
     DependsOn: HelloYoppytest2
     Properties:
