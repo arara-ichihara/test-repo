@@ -1,12 +1,9 @@
 version: 0.2
-
 phases:
   build:
     commands:
       - export BUCKET=yoppy-codepipeline-test-bucket-yuto
       - aws cloudformation package --template-file template.yaml --s3-bucket $BUCKET --output-template-file outputtemplate.yaml
-
-
 artifacts:
   type: zip
   files:
