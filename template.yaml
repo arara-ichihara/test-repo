@@ -8,6 +8,7 @@ Resources:
       Handler: yutomen_function.lambda_handler
       Runtime: python3.8
       FunctionName: HelloYoppyPipeTest-yuto
+      CodeUri: yutomen_function.py
   
   HelloYoppytest2:
     Type: AWS::Serverless::Function
@@ -15,6 +16,7 @@ Resources:
       Handler: tuan_function.lambda_handler
       Runtime: python3.8
       FunctionName: HelloYoppyTest-tuan
+      CodeUri: tuan_function.py
 
   HelloYoppytest3:
     Type: AWS::Serverless::Function
@@ -22,3 +24,211 @@ Resources:
       Handler: tama_function.lambda_handler
       Runtime: python3.8
       FunctionName: HelloYoppyTest-tama
+      CodeUri: tama_function.py
+
+
+
+# API_gatewayがlambdaを呼び出すためのpermission
+  APIgatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref 'HelloYoppytest1'
+      Action: lambda:InvokeFunction # principalがlambdaにどんな行動をするか
+      Principal: apigateway.amazonaws.com # api-gatewayがlambdaを呼び出す
+
+
+  S3AccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - apigateway.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      # ロールに使われるポリシーを指定
+      Description: allows yoppy-api to access to S3
+      # s3のフルアクセス権限
+      Policies:
+      - PolicyName: S3AccessPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:Get* # S3からオブジェクトを取得する許可
+            - s3:List*
+            Resource : "*" 
+      RoleName: yoppy_api_role
+
+    
+
+  ApiGatewayRestApi:  #trong変更
+    Type: AWS::ApiGateway::RestApi
+    Properties: 
+      Name: "yoppy-api" 
+      EndpointConfiguration: # 作成時にデフォルトでリージョンに設定。VPCの中に設置するのでエンドポイントなどは使わないためPRIVATEにしない
+        Types:
+          - "REGIONAL"
+
+      Policy:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Deny
+          Principal: "*"
+          Action: execute-api:Invoke
+          Resource: "execute-api:/*/*/*"
+          Condition:
+            StringNotEquals:
+              aws:SourceVpce: vpce-0a8244b81e7b4a1b7
+              aws:SourceVpc: vpc-d234deb7
+        - Effect: Allow
+          Principal: "*"
+          Action: execute-api:Invoke
+          Resource: "execute-api:/*/*/*"
+  ApiGatewayElectedResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId: !Ref ApiGatewayRestApi
+        ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+        PathPart: elected
+  ApiGatewayHistoriesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      PathPart: histories
+  ApiGatewayMonthlyResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId: !Ref ApiGatewayRestApi
+        ParentId: !Ref ApiGatewayHistoriesResource
+        PathPart: monthly
+  ApiGatewayLatestResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId: !Ref ApiGatewayRestApi
+        ParentId: !Ref ApiGatewayMonthlyResource
+        PathPart: latest
+  ApiGatewayUsageResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId: !Ref ApiGatewayRestApi
+        ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+        PathPart: usage
+  ApiGatewayUsageMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi #上のコードを参照する
+      ResourceId: !Ref ApiGatewayUsageResource #上のコードを参照する resource不要の場合はrootを指定(!GetAtt ApiGatewayRestApi.RootResourceId)
+      HttpMethod: "POST" # 本体
+      AuthorizationType: "NONE"
+      Integration: # httpではなくlambdaを選択するため例とは異なる
+        Type: AWS
+        IntegrationHttpMethod: POST # MOCK以外は必須
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloYoppytest1.Arn}/invocations"
+        IntegrationResponses:
+          - StatusCode: 200 # backendのプロセスが完了した時のレスポンスコード
+      MethodResponses:
+      - StatusCode: 200 # API call自体のレスポンスコード
+        ResponseModels:
+          text/csv: Empty # content_type: model
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Origin: true
+  ApiGatewayLatestMethod: # 変更
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ResourceId: !Ref ApiGatewayLatestResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: GET
+        Credentials: !GetAtt S3AccessRole.Arn
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/tama-csv-backet/test.csv"
+        IntegrationResponses:
+          - StatusCode: 200 # backendのプロセスが完了した時のレスポンスコード
+      MethodResponses:
+      - StatusCode: 200 # API call自体のレスポンスコード
+        ResponseModels:
+          text/csv: Empty # content_type: model
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Origin: true
+  ApiGatewayElectedMethod: # trong変更
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi #上のコードを参照する
+      ResourceId: !Ref ApiGatewayElectedResource #上のコードを参照する resource不要の場合はrootを指定(!GetAtt ApiGatewayRestApi.RootResourceId)
+      HttpMethod: GET # 本体
+      AuthorizationType: NONE
+      Integration: # httpではなくlambdaを選択するため例とは異なる
+        Type: AWS
+        IntegrationHttpMethod: POST #要確認
+        Uri: !Sub arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:476861174977:function:HelloYoppyTest-tuan/invocations
+        IntegrationResponses:
+          - StatusCode: 200 
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'http://happy.araraapps.com'"
+            ResponseTemplates:
+              application/json: ''
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Origin: true
+  ApiGatewayOptionsMethod: # trong変更
+    Type: AWS::ApiGateway::Method
+    DependsOn: HelloYoppytest2
+    Properties:
+      AuthorizationType: NONE
+      RestApiId: !Ref ApiGatewayRestApi
+      ResourceId: !Ref ApiGatewayElectedResource
+      HttpMethod: OPTIONS
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+            method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+            method.response.header.Access-Control-Allow-Origin: "'http://happy.araraapps.com'"
+          ResponseTemplates:
+            application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+  # deploys an API Gateway RestApi resource to a stage so that clients can call the API over the internet
+  RestAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      Description: Automatically created by the RestApi construct
+    DependsOn:
+      - ApiGatewayElectedResource
+      - ApiGatewayHistoriesResource
+      - ApiGatewayMonthlyResource
+      - ApiGatewayLatestResource
+      - ApiGatewayUsageResource
+      - ApiGatewayUsageMethod #論理IDと合わせる
+      - ApiGatewayLatestMethod
+      - ApiGatewayElectedMethod
+      - ApiGatewayOptionsMethod
+  RestAPIDeploymentStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      DeploymentId: !Ref RestAPIDeployment
+      StageName: v1
