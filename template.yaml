@@ -71,28 +71,28 @@ Resources:
     Properties: 
       Name: "yoppy-api" 
       EndpointConfiguration: # 作成時にデフォルトでリージョンに設定。VPCの中に設置するのでエンドポイントなどは使わないためPRIVATEにしない
-#         Types:
-#           - "REGIONAL"
         Types:
-        - "PRIVATE"
-      VpcEndpointIds:
-        - "vpce-0a8244b81e7b4a1b7"  #要確認
+          - "REGIONAL"
+#         Types:
+#         - "PRIVATE"
+#       VpcEndpointIds:
+#         - "vpce-0a8244b81e7b4a1b7"  #要確認
 
-      Policy:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Deny
-          Principal: "*"
-          Action: execute-api:Invoke
-          Resource: "execute-api:/*/*/*"
-          Condition:
-            StringNotEquals:
-              aws:SourceVpce: vpce-0a8244b81e7b4a1b7
-              aws:SourceVpc: vpc-d234deb7
-        - Effect: Allow
-          Principal: "*"
-          Action: execute-api:Invoke
-          Resource: "execute-api:/*/*/*"
+#       Policy:
+#         Version: 2012-10-17
+#         Statement:
+#         - Effect: Deny
+#           Principal: "*"
+#           Action: execute-api:Invoke
+#           Resource: "execute-api:/*/*/*"
+#           Condition:
+#             StringNotEquals:
+#               aws:SourceVpce: vpce-0a8244b81e7b4a1b7
+#               aws:SourceVpc: vpc-d234deb7
+#         - Effect: Allow
+#           Principal: "*"
+#           Action: execute-api:Invoke
+#           Resource: "execute-api:/*/*/*"
   ApiGatewayElectedResource:
       Type: AWS::ApiGateway::Resource
       Properties:
