@@ -5,26 +5,26 @@ Resources:
   HelloYoppytest1:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: yutomen_function.lambda_handler # 修正
+      Handler: yutomen_function.lambda_handler
       Runtime: python3.8
-      FunctionName: HelloYoppyPipeTest-yuto　# 修正
-      CodeUri: yutomen_function.py　# 修正
+      FunctionName: HelloYoppyPipeTest-yuto
+      CodeUri: yutomen_function.py
   
   HelloYoppytest2:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: tuan_function.lambda_handler　# 修正
+      Handler: tuan_function.lambda_handler
       Runtime: python3.8
-      FunctionName: HelloYoppyTest-tuan　# 修正
-      CodeUri: tuan_function.py　# 修正
+      FunctionName: HelloYoppyTest-tuan
+      CodeUri: tuan_function.py
 
   HelloYoppytest3:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: tama_function.lambda_handler　# 修正
+      Handler: tama_function.lambda_handler　
       Runtime: python3.8
-      FunctionName: HelloYoppyTest-tama　# 修正
-      CodeUri: tama_function.py　# 修正
+      FunctionName: HelloYoppyTest-tama　
+      CodeUri: tama_function.py　
 
 
 
@@ -32,9 +32,9 @@ Resources:
   APIgatewayPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref 'HelloYoppytest1'　# 修正
-      Action: lambda:InvokeFunction # principalがlambdaにどんな行動をするか
-      Principal: apigateway.amazonaws.com # api-gatewayがlambdaを呼び出す
+      FunctionName: !Ref 'HelloYoppytest1'　
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
 
 
   S3AccessRole:
@@ -49,7 +49,7 @@ Resources:
             - apigateway.amazonaws.com
           Action:
           - sts:AssumeRole
-      # ロールに使われるポリシーを指定
+
       Description: allows yoppy-api to access to S3
       # s3のフルアクセス権限
       Policies:
@@ -59,7 +59,7 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-            - s3:Get* # S3からオブジェクトを取得する許可
+            - s3:Get*
             - s3:List*
             Resource : "*" 
       RoleName: yoppy_api_role
@@ -70,11 +70,11 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties: 
       Name: "yoppy-api" 
-      EndpointConfiguration: # 作成時にデフォルトでリージョンに設定。VPCの中に設置するのでエンドポイントなどは使わないためPRIVATEにしない
+      EndpointConfiguration:
         Types:
           - "PRIVATE"
         VpcEndpointIds:
-          - "vpce-0a8244b81e7b4a1b7"  #要確認
+          - "vpce-0a8244b81e7b4a1b7"
       Policy:
         Version: 2012-10-17
         Statement:
@@ -200,7 +200,7 @@ Resources:
           method.response.header.Access-Control-Allow-Origin: true
   ApiGatewayOptionsMethod:
     Type: AWS::ApiGateway::Method
-    DependsOn: HelloYoppytest2　# 修正
+    DependsOn: HelloYoppytest2
     Properties:
       AuthorizationType: NONE
       RestApiId: !Ref ApiGatewayRestApi
