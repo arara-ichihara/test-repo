@@ -1,40 +1,56 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Hello yoppy
+Description: APIgatewayLambda
 Resources:
-  HelloYoppytest1:
+  GetWinningInformationLambda:
     Type: AWS::Serverless::Function
-    Properties:
-      Handler: yutomen_function.lambda_handler # 修正w
+    DependsOn: 
+      - LambdaRoleGetWinningInformation
+      - LambdaLayer
+    Properties: 
+      Description: get reservation information from user
+      FunctionName: getReservationCFn
+      Handler: GetWinningInformation.lambda_handler
+      Role: LambdaRoleGetWinningInformation.arn
       Runtime: python3.8
-      FunctionName: HelloYoppyPipeTest-yuto
-      CodeUri: yutomen_function.py
+      CodeUri: GetWinningInformation.py
+      Environment:
+        Variables:
+          DATABASE: happy_restaurant_web_production
+          HOST: 172.31.0.218
+          PASSWORD: wU2frLTp
+          PORT: 3306
+          USER: happy
+      Layers: 
+        - !Ref LambdaLayer
+      #VpcId:
+      #  - vpc-d234deb7
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-e42eec81
+        SubnetIds:
+          - subnet-385eb74f 
   
-  HelloYoppytest2:
+  LambdaRoleSetUsageConfirmation:
     Type: AWS::Serverless::Function
-    Properties:
-      Handler: tuan_function.lambda_handler
-      Runtime: python3.8
-      FunctionName: HelloYoppyTest-tuan
-      CodeUri: tuan_function.py
+    Properties: 
+      CodeUri: LambdaRoleSetUsageConfirmation.py
+      Description: Lambda function of python3.7
+      FunctionName: set_usage_confirmation
+      # 実行するファイル.関数名(default)
+      Handler: LambdaRoleSetUsageConfirmation.lambda_handler # ファイル名.lambda_handler
+      # dynamoDBとapi_gatewayへのアクセスを許可する下記のロールをアタッチ
+      Role: LambdaRoleSetUsageConfirmation.Arn # 下記で設定するIAMロールを設定
+      Runtime: python3.8    
 
-  HelloYoppytest3:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: tama_function.lambda_handler
-      Runtime: python3.8
-      FunctionName: HelloYoppyTest-tama
-      CodeUri: tama_function.py
-
-
-
-# API_gatewayがlambdaを呼び出すためのpermission
-  APIgatewayPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Ref 'HelloYoppytest1'
-      Action: lambda:InvokeFunction # principalがlambdaにどんな行動をするか
-      Principal: apigateway.amazonaws.com # api-gatewayがlambdaを呼び出す
+  LambdaPermission:
+      Type: AWS::Lambda::Permission
+      DependsOn: LambdaFunction
+      Properties:
+        FunctionName: !Ref GetWinningInformationLambda
+        Action: lambda:InvokeFunction 
+        Principal: apigateway.amazonaws.com 
+        SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/POST/elected
 
 
   S3AccessRole:
