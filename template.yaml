@@ -5,8 +5,7 @@ Resources:
   GetWinningInformationLambda:
     Type: AWS::Serverless::Function
     DependsOn: 
-      - LambdaRoleGetWinningInformation
-      - LambdaLayer
+      - !Ref LambdaLayer
     Properties: 
       Description: get reservation information from user
       FunctionName: getReservationCFn
@@ -23,8 +22,6 @@ Resources:
           USER: happy
       Layers: 
         - !Ref LambdaLayer
-      #VpcId:
-      #  - vpc-d234deb7
       VpcConfig:
         SecurityGroupIds:
           - sg-e42eec81
