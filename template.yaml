@@ -54,7 +54,7 @@ Resources:
 
   LambdaPermission:
       Type: AWS::Lambda::Permission
-      DependsOn: LambdaFunction
+      DependsOn: GetWinningInformationLambda
       Properties:
         FunctionName: !Ref GetWinningInformationLambda
         Action: lambda:InvokeFunction 
