@@ -17,7 +17,7 @@ Resources:
         Variables:
           DATABASE: happy_restaurant_web_production
           HOST: 172.31.0.218
-          PASSWORD: wU2frLTp
+          PASSWORD: wU2frLTp # 注意
           PORT: 3306
           USER: happy
       Layers: 
@@ -40,7 +40,7 @@ Resources:
       Description: package for mysql-connector-python
       LayerName: mysql-connector-CF #要確認
       LicenseInfo: GPL v2.0
-  LambdaRoleSetUsageConfirmation:
+  SetUsageConfirmationLambda:
     Type: AWS::Serverless::Function
     Properties: 
       CodeUri: SetUsageConfirmationLambda.py
@@ -60,7 +60,6 @@ Resources:
         Action: lambda:InvokeFunction 
         Principal: apigateway.amazonaws.com 
         SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/POST/elected
-
 
   S3AccessRole:
     Type: AWS::IAM::Role
@@ -154,7 +153,7 @@ Resources:
       Integration: # httpではなくlambdaを選択するため例とは異なる
         Type: AWS
         IntegrationHttpMethod: POST # MOCK以外は必須
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaRoleSetUsageConfirmation.Arn}/invocations"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SetUsageConfirmationLambda}/invocations"
         IntegrationResponses:
           - StatusCode: 200 # backendのプロセスが完了した時のレスポンスコード
       MethodResponses:
