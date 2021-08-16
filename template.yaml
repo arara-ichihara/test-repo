@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: APIgatewayLambda
 Resources:
   GetWinningInformationLambda:
-    Type: AWS::Serverless::Function
+    Type: AWS::lambda::Function
     DependsOn: 
       - LambdaLayer
     Properties: 
@@ -41,7 +41,7 @@ Resources:
       LayerName: mysql-connector-CF #要確認
       LicenseInfo: GPL v2.0
   SetUsageConfirmationLambda:
-    Type: AWS::Serverless::Function
+    Type: AWS::Servelambdarless::Function
     Properties: 
       CodeUri: SetUsageConfirmationLambda.py
       Description: Lambda function of python3.7
