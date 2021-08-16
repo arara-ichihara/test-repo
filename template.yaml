@@ -2,8 +2,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: APIgatewayLambda
 Resources:
-  GetWinningInformationLambda: 
-    Type: AWS::lambda::Function
+  GetWinningInformationLambda:
+    Type: AWS::serverless::Function
     DependsOn: 
       - LambdaLayer
     Properties: 
@@ -28,7 +28,7 @@ Resources:
         SubnetIds:
           - subnet-385eb74f 
   LambdaLayer:
-    Type: AWS::Lambda::LayerVersion
+    Type: AWS::serverless::LayerVersion
     Properties: 
       CompatibleRuntimes: 
         - python3.6
