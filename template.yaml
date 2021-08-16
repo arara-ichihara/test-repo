@@ -153,7 +153,7 @@ Resources:
       Integration: # httpではなくlambdaを選択するため例とは異なる
         Type: AWS
         IntegrationHttpMethod: POST # MOCK以外は必須
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SetUsageConfirmationLambda}/invocations"
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:476861174977:function:SetUsageConfirmationLambda/invocations
         IntegrationResponses:
           - StatusCode: 200 # backendのプロセスが完了した時のレスポンスコード
       MethodResponses:
@@ -192,7 +192,7 @@ Resources:
       Integration: # httpではなくlambdaを選択するため例とは異なる
         Type: AWS
         IntegrationHttpMethod: POST #要確認
-        Uri: !Sub arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:476861174977:function:GetWinningInformationLambda/invocations
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:476861174977:function:GetWinningInformationLambda/invocations
         IntegrationResponses:
           - StatusCode: 200 
             ResponseParameters:
