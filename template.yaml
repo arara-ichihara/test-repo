@@ -3,16 +3,16 @@ Transform: AWS::Serverless-2016-10-31
 Description: APIgatewayLambda
 Resources:
   GetWinningInformationLambda:
-    Type: AWS::Serverless::Function
+    Type: AWS::Lambda::Function
     DependsOn: 
       - LambdaLayer
     Properties: 
       Description: get reservation information from user
       FunctionName: getReservationCFn
-      Handler: GetWinningInformationLambda.lambda_handler
-      Role: arn:aws:iam::476861174977:role/service-role/LambdaRoleGetWinningInformation
+      Handler: lambda_function.lambda_handler
+      Role: arn:aws:iam::476861174977:role/service-role/get_user_id-role-4371kkmz
       Runtime: python3.8
-      CodeUri: GetWinningInformationLambda.py
+      Code: GetWinningInformationLambda.py
       Environment:
         Variables:
           DATABASE: happy_restaurant_web_production
@@ -28,7 +28,7 @@ Resources:
         SubnetIds:
           - subnet-385eb74f 
   LambdaLayer:
-    Type: AWS::Serverless::LayerVersion
+    Type: AWS::Lambda::LayerVersion
     Properties: 
       CompatibleRuntimes: 
         - python3.6
@@ -40,18 +40,17 @@ Resources:
       Description: package for mysql-connector-python
       LayerName: mysql-connector-CF #要確認
       LicenseInfo: GPL v2.0
-  SetUsageConfirmationLambda:
-    Type: AWS::Serverless::Function
-    Properties: 
-      CodeUri: SetUsageConfirmationLambda.py
-      Description: Lambda function of python3.7
-      FunctionName: set_usage_confirmation
-      # 実行するファイル.関数名(default)
-      Handler: SetUsageConfirmationLambda.lambda_handler # ファイル名.lambda_handler
-      # dynamoDBとapi_gatewayへのアクセスを許可する下記のロールをアタッチ
-      Role: arn:aws:iam::476861174977:role/LambdaRoleSetUsageConfirmation # 下記で設定するIAMロールを設定
-      Runtime: python3.8    
-
+  # SetUsageConfirmationLambda:
+  #   Type: AWS::Serverless::Function
+  #   Properties: 
+  #     CodeUri: SetUsageConfirmationLambda.py
+  #     Description: Lambda function of python3.7
+  #     FunctionName: set_usage_confirmation
+  #     # 実行するファイル.関数名(default)
+  #     Handler: SetUsageConfirmationLambda.lambda_handler # ファイル名.lambda_handler
+  #     # dynamoDBとapi_gatewayへのアクセスを許可する下記のロールをアタッチ
+  #     Role: arn:aws:iam::476861174977:role/LambdaRoleSetUsageConfirmation # 下記で設定するIAMロールを設定
+  #     Runtime: python3.8    
   LambdaPermission:
       Type: AWS::Lambda::Permission
       DependsOn: GetWinningInformationLambda
@@ -59,8 +58,7 @@ Resources:
         FunctionName: !Ref GetWinningInformationLambda
         Action: lambda:InvokeFunction 
         Principal: apigateway.amazonaws.com 
-        SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/POST/elected
-
+        SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/GET/elected/*/*
   S3AccessRole:
     Type: AWS::IAM::Role
     Properties:
@@ -87,9 +85,7 @@ Resources:
             - s3:List*
             Resource : "*" 
       RoleName: yoppy_api_role
-
     
-
   ApiGatewayRestApi:  #trong変更
     Type: AWS::ApiGateway::RestApi
     Properties: 
@@ -97,14 +93,13 @@ Resources:
       EndpointConfiguration: # 作成時にデフォルトでリージョンに設定。VPCの中に設置するのでエンドポイントなどは使わないためPRIVATEにしない
         Types:
           - "REGIONAL"
-
       Policy:
         Version: 2012-10-17
         Statement:
         - Effect: Deny
           Principal: "*"
           Action: execute-api:Invoke
-          Resource: "execute-api:/*/*/*"
+          Resource: "execute-api:/*/GET/elected/*/*"
           Condition:
             StringNotEquals:
               aws:SourceVpce: vpce-0a8244b81e7b4a1b7
@@ -112,7 +107,7 @@ Resources:
         - Effect: Allow
           Principal: "*"
           Action: execute-api:Invoke
-          Resource: "execute-api:/*/*/*"
+          Resource: "execute-api:/*/GET/elected/*/*"
   ApiGatewayElectedResource:
       Type: AWS::ApiGateway::Resource
       Properties:
@@ -192,7 +187,13 @@ Resources:
       Integration: # httpではなくlambdaを選択するため例とは異なる
         Type: AWS
         IntegrationHttpMethod: POST #要確認
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:476861174977:function:GetWinningInformationLambda/invocations
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetWinningInformationLambda.Arn}/invocations'
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates: 
+          "application/json": "{\n
+          \"user_id\": \"$input.params('user_id')\",\n
+          \"today\": \"$input.params('today')\"\n
+          }"
         IntegrationResponses:
           - StatusCode: 200 
             ResponseParameters:
@@ -256,3 +257,4 @@ Resources:
       RestApiId: !Ref ApiGatewayRestApi
       DeploymentId: !Ref RestAPIDeployment
       StageName: v1
+
