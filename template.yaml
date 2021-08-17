@@ -91,39 +91,7 @@ Resources:
       RoleName: yoppy_api_role
 
     
-  ApiGatewayLogGroup: #追加
-    Type: AWS::Logs::LogGroup
-    Properties: 
-      LogGroupName: ApiGateway_Log_CF
-      RetentionInDays: 365
-  ApiGatewayAttachedRole: #追加
-    Type: AWS::IAM::Role
-    Properties:
-      Description: Allows API Gateway to push logs to CloudWatch Logs.
-      #AssumeRolePolicy determines which principals (users, other roles, AWS services) are permitted to call sts:AssumeRole for this LambdaAttachedRole
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - apigateway.amazonaws.com
-          #Action is the mean to obtain temporary API credentials
-          Action:
-          - sts:AssumeRole
-      #Policiesをゼロから作る場合
-      ManagedPolicyArns : 
-        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
-      Path: /service-role/
-      RoleName: APIGateway_Cloudwatch_Role_CF
-  ApiGatewayAccount: #追加
-    Type: AWS::ApiGateway::Account
-    DependsOn: ApiGatewayRestApi
-    Properties: 
-      CloudWatchRoleArn: !GetAtt 
-        - ApiGatewayAttachedRole
-        - Arn
-  
+
   ApiGatewayRestApi:  #trong変更
     Type: AWS::ApiGateway::RestApi
     Properties: 
@@ -337,26 +305,52 @@ Resources:
       - ApiGatewayMonthlyResource
       - ApiGatewayLatestResource
       - ApiGatewayUsageResource
-      - ApiGatewayUsageMethod
+      - ApiGatewayUsageMethod #論理IDと合わせる
       - ApiGatewayLatestMethod
       - ApiGatewayElectedMethod
-      - ApiGatewayOptionsElectedMethod
-      - ApiGatewayOptionsHistoriesMethod
-      - ApiGatewayOptionsUsageMethod
+      - ApiGatewayOptionsMethod
   RestAPIDeploymentStage:
     Type: AWS::ApiGateway::Stage
     Properties:
       RestApiId: !Ref ApiGatewayRestApi
       DeploymentId: !Ref RestAPIDeployment
       StageName: v1
-      AccessLogSetting:
-        DestinationArn: !GetAtt
-          - ApiGatewayLogGroup
-          - Arn 
-        Format: !Sub |
-          { "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user","requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath", "status":"$context.status","protocol":"$context.protocol", "responseLength":"$context.responseLength" }
-      MethodSettings: 
-      - DataTraceEnabled: True
-        LoggingLevel: INFO
-        HttpMethod: '*'
-        ResourcePath: '/*'
+
+#バッチ処理
+  BatchProcessingLambda:
+    Type: AWS::Serverless::Function
+    Properties: 
+      Description: batch script for CSV file creation
+      FunctionName: BatchProcessing
+      Handler: BatchProcessing.lambda_handler
+      Role: arn:aws:iam::373761374801:role/LambdaReadDynamoRole #これ変更必要 dynamodb読み込みrole的なの
+      Runtime: python3.6
+      Layers: 
+        - arn:aws:lambda:ap-northeast-1:373761374801:layer:pandas:3
+      CodeUri: BatchProcessing.py      
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties: 
+      Name: "batch-processing-event"
+      Description: "Invoke Lambda on the first day of every month"
+      ScheduleExpression: "cron(0 16 L * ? *)"  #AWS uses UTC timezone
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: 
+            Fn::GetAtt: 
+            - "LambdaFunction"
+            - "Arn"
+          Id: "TargetFunctionV1"
+          #Input: !Sub |
+          #  {"user_id":"323","today":"2021-08-11"}
+  PermissionForEventsToInvokeLambda: #add EventBridge to Lambda trigger
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "LambdaFunction"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRule"
+          - "Arn"
