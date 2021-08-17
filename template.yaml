@@ -88,9 +88,6 @@ Resources:
             - s3:List*
             Resource : "*" 
       RoleName: yoppy_api_role
-
-    
-
   ApiGatewayRestApi:  #trong変更
     Type: AWS::ApiGateway::RestApi
     Properties: 
@@ -338,7 +335,7 @@ Resources:
         - 
           Arn: 
             Fn::GetAtt: 
-            - "LambdaFunction"
+            - "BatchProcessingLambda"
             - "Arn"
           Id: "TargetFunctionV1"
           #Input: !Sub |
@@ -346,7 +343,7 @@ Resources:
   PermissionForEventsToInvokeLambda: #add EventBridge to Lambda trigger
     Type: AWS::Lambda::Permission
     Properties: 
-      FunctionName: !Ref "LambdaFunction"
+      FunctionName: !Ref "BatchProcessingLambda"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: 
