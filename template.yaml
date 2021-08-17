@@ -305,10 +305,12 @@ Resources:
       - ApiGatewayMonthlyResource
       - ApiGatewayLatestResource
       - ApiGatewayUsageResource
-      - ApiGatewayUsageMethod #論理IDと合わせる
+      - ApiGatewayUsageMethod
       - ApiGatewayLatestMethod
       - ApiGatewayElectedMethod
-      - ApiGatewayOptionsMethod
+      - ApiGatewayOptionsElectedMethod
+      - ApiGatewayOptionsHistoriesMethod
+      - ApiGatewayOptionsUsageMethod
   RestAPIDeploymentStage:
     Type: AWS::ApiGateway::Stage
     Properties:
