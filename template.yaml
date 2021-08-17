@@ -11,7 +11,6 @@ Resources:
       FunctionName: getReservationCFn
       Handler: GetWinningInformationLambda.lambda_handler
       Role: arn:aws:iam::476861174977:role/service-role/LambdaRoleGetWinningInformation
-      Role: arn:aws:iam::476861174977:role/fullaccesstoec2
       Runtime: python3.8
       CodeUri: GetWinningInformationLambda.py
       Environment:
