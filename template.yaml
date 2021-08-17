@@ -91,7 +91,39 @@ Resources:
       RoleName: yoppy_api_role
 
     
-
+  ApiGatewayLogGroup: #追加
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: ApiGateway_Log_CF
+      RetentionInDays: 365
+  ApiGatewayAttachedRole: #追加
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Allows API Gateway to push logs to CloudWatch Logs.
+      #AssumeRolePolicy determines which principals (users, other roles, AWS services) are permitted to call sts:AssumeRole for this LambdaAttachedRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - apigateway.amazonaws.com
+          #Action is the mean to obtain temporary API credentials
+          Action:
+          - sts:AssumeRole
+      #Policiesをゼロから作る場合
+      ManagedPolicyArns : 
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Path: /service-role/
+      RoleName: APIGateway_Cloudwatch_Role_CF
+  ApiGatewayAccount: #追加
+    Type: AWS::ApiGateway::Account
+    DependsOn: ApiGatewayRestApi
+    Properties: 
+      CloudWatchRoleArn: !GetAtt 
+        - ApiGatewayAttachedRole
+        - Arn
+  
   ApiGatewayRestApi:  #trong変更
     Type: AWS::ApiGateway::RestApi
     Properties: 
@@ -317,3 +349,14 @@ Resources:
       RestApiId: !Ref ApiGatewayRestApi
       DeploymentId: !Ref RestAPIDeployment
       StageName: v1
+      AccessLogSetting:
+        DestinationArn: !GetAtt
+          - ApiGatewayLogGroup
+          - Arn 
+        Format: !Sub |
+          { "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user","requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath", "status":"$context.status","protocol":"$context.protocol", "responseLength":"$context.responseLength" }
+      MethodSettings: 
+      - DataTraceEnabled: True
+        LoggingLevel: INFO
+        HttpMethod: '*'
+        ResourcePath: '/*'
