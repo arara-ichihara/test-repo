@@ -321,7 +321,7 @@ Resources:
       Description: batch script for CSV file creation
       FunctionName: BatchProcessing
       Handler: BatchProcessing.lambda_handler
-      Role: arn:aws:iam::373761374801:role/LambdaReadDynamoRole #これ変更必要 dynamodb読み込みrole的なの
+      Role: arn:aws:iam::476861174977:role/LambdaReadDynamoRole #これ変更必要 dynamodb読み込みrole的なの
       Runtime: python3.6
       Layers: 
         - arn:aws:lambda:ap-northeast-1:476861174977:layer:pandas:3
