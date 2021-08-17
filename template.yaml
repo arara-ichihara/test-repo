@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: APIgatewayLambda
 Resources:
   GetWinningInformationLambda:
-    Type: AWS::Serverless::Function
+    Type: AWS::Lambda::Function
     DependsOn: 
       - LambdaLayer
     Properties:
@@ -35,7 +35,7 @@ Resources:
             Resource: "*"
       Role: arn:aws:iam::476861174977:role/service-role/LambdaRoleGetWinningInformation
       Runtime: python3.8
-      CodeUri: GetWinningInformationLambda.py
+      Code: GetWinningInformationLambda.py
       Environment:
         Variables:
           DATABASE: happy_restaurant_web_production
@@ -64,9 +64,9 @@ Resources:
       LayerName: mysql-connector-CF #要確認
       LicenseInfo: GPL v2.0
   SetUsageConfirmationLambda:
-    Type: AWS::Serverless::Function
+    Type: AWS::Lambda::Function
     Properties: 
-      CodeUri: SetUsageConfirmationLambda.py
+      Code: SetUsageConfirmationLambda.py
       Description: Lambda function of python3.7
       FunctionName: set_usage_confirmation
       # 実行するファイル.関数名(default)
