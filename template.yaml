@@ -5,7 +5,7 @@ Resources:
   GetWinningInformationLambda:
     Type: AWS::Serverless::Function
     DependsOn: 
-      - LambdaLayer
+      - MysqlConnectorLayer
     Properties:
       Description: get reservation information from user
       FunctionName: GetWinningInformationLambda
@@ -21,24 +21,32 @@ Resources:
           PORT: 3306
           USER: happy
       Layers: 
-        - !Ref LambdaLayer
+        - !Ref MysqlConnectorLayer
       VpcConfig:
         SecurityGroupIds:
           - sg-e42eec81
         SubnetIds:
           - subnet-385eb74f 
-  LambdaLayer:
-    Type: AWS::Lambda::LayerVersion
+  PandasNumpyLayer: #tama追加
+    Type: AWS::Serverless::LayerVersion
     Properties: 
       CompatibleRuntimes: 
         - python3.6
         - python3.7
         - python3.8
-      Content: 
-        S3Bucket: cf-templates-1j86fkrhta4zg-ap-northeast-1
-        S3Key: mysql-connector-layer.zip # mysql package
+      ContentUri: layer
+      LayerName: PandasNumpyLayer
+      RetentionPolicy: Delete
+  MysqlConnectorLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties: 
+      CompatibleRuntimes: 
+        - python3.6
+        - python3.7
+        - python3.8
+      ContentUri: layer2
       Description: package for mysql-connector-python
-      LayerName: mysql-connector-CF #要確認
+      LayerName: MysqlConnectorLayer #要確認
       LicenseInfo: GPL v2.0
   SetUsageConfirmationLambda:
     Type: AWS::Serverless::Function
@@ -382,8 +390,9 @@ Resources:
       Handler: BatchProcessing.lambda_handler
       Role: arn:aws:iam::476861174977:role/ReadDynamoLambdaRole #これ変更必要 dynamodb読み込みrole的なの
       Runtime: python3.6
+      Timeout: 900
       Layers: 
-        - arn:aws:lambda:ap-northeast-1:476861174977:layer:pandas:3 #用確認
+      - !Ref PandasNumpyLayer
       CodeUri: BatchProcessing.py      
   ScheduledRule:
     Type: AWS::Events::Rule
