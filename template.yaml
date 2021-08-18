@@ -10,7 +10,7 @@ Resources:
       Description: get reservation information from user
       FunctionName: GetWinningInformationLambda
       Handler: GetWinningInformationLambda.lambda_handler
-      Role: arn:aws:iam::476861174977:role/service-role/LambdaRoleGetWinningInformation
+      Role: arn:aws:iam::476861174977:role/service-role/GetWinningInformationLambdaRole
       Runtime: python3.8
       CodeUri: GetWinningInformationLambda.py
       Environment:
@@ -49,7 +49,7 @@ Resources:
       # 実行するファイル.関数名(default)
       Handler: SetUsageConfirmationLambda.lambda_handler # ファイル名.lambda_handler
       # dynamoDBとapi_gatewayへのアクセスを許可する下記のロールをアタッチ
-      Role: arn:aws:iam::476861174977:role/LambdaRoleSetUsageConfirmation # 下記で設定するIAMロールを設定
+      Role: arn:aws:iam::476861174977:role/SetUsageConfirmationLambdaRole # 下記で設定するIAMロールを設定
       Role: arn:aws:iam::476861174977:role/fullaccesstoec2
       Runtime: python3.8    
 
