@@ -10,7 +10,7 @@ Resources:
       Description: get reservation information from user
       FunctionName: getReservationCFn
       Handler: GetWinningInformationLambda.lambda_handler
-      Role: arn:aws:iam::476861174977:role/service-role/LambdaRoleGetWinningInformation
+      Role: arn:aws:iam::476861174977:role/service-role/LambdaRoleGetWinningInformation #要確認
       Runtime: python3.8
       CodeUri: GetWinningInformationLambda.py
       Environment:
@@ -60,7 +60,7 @@ Resources:
         FunctionName: !Ref GetWinningInformationLambda
         Action: lambda:InvokeFunction 
         Principal: apigateway.amazonaws.com 
-        SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/GET/elected
+        SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/GET/elected/*/*
 
   S3AccessRole:
     Type: AWS::IAM::Role
@@ -88,21 +88,46 @@ Resources:
             - s3:List*
             Resource : "*" 
       RoleName: yoppy_api_role
+  ApiGatewayLogGroup: 
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: ApiGateway_Log_CF #用確認
+      RetentionInDays: 365
+  ApiGatewayAttachedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Allows API Gateway to push logs to CloudWatch Logs.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - apigateway.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns : 
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Path: /service-role/
+      RoleName: APIGateway_Cloudwatch_Role_CF #用確認
+  
   ApiGatewayRestApi:  #trong変更
     Type: AWS::ApiGateway::RestApi
     Properties: 
       Name: "yoppy-api" 
-      EndpointConfiguration: # 作成時にデフォルトでリージョンに設定。VPCの中に設置するのでエンドポイントなどは使わないためPRIVATEにしない
+      Description: API gateway created by CF
+      EndpointConfiguration: 
         Types:
-          - "REGIONAL"
-
+          - "PRIVATE"
+        VpcEndpointIds:
+          - "vpce-0a8244b81e7b4a1b7"
       Policy:
         Version: 2012-10-17
         Statement:
         - Effect: Deny
           Principal: "*"
           Action: execute-api:Invoke
-          Resource: "execute-api:/*/*/*"
+          Resource: "execute-api:/*/*/*"  #electedリソースの場合：execute-api:/*/GET/elected/*/*
           Condition:
             StringNotEquals:
               aws:SourceVpce: vpce-0a8244b81e7b4a1b7
@@ -111,12 +136,31 @@ Resources:
           Principal: "*"
           Action: execute-api:Invoke
           Resource: "execute-api:/*/*/*"
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    DependsOn: ApiGatewayRestApi
+    Properties: 
+      CloudWatchRoleArn: !GetAtt 
+        - ApiGatewayAttachedRole
+        - Arn
   ApiGatewayElectedResource:
       Type: AWS::ApiGateway::Resource
       Properties:
         RestApiId: !Ref ApiGatewayRestApi
         ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
         PathPart: elected
+  ApiGatewayElectedResourceUser:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ParentId: !Ref ApiGatewayElectedResource
+      PathPart: '{user_id}' #要確認
+  ApiGatewayElectedResourceDate:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      ParentId: !Ref ApiGatewayElectedResourceUser
+      PathPart: '{date}' #要確認    
   ApiGatewayHistoriesResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -184,13 +228,19 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref ApiGatewayRestApi #上のコードを参照する
-      ResourceId: !Ref ApiGatewayElectedResource #上のコードを参照する resource不要の場合はrootを指定(!GetAtt ApiGatewayRestApi.RootResourceId)
+      ResourceId: !Ref ApiGatewayElectedResourceDate #上のコードを参照する resource不要の場合はrootを指定(!GetAtt ApiGatewayRestApi.RootResourceId)
       HttpMethod: GET # 本体
       AuthorizationType: NONE
       Integration: # httpではなくlambdaを選択するため例とは異なる
         Type: AWS
-        IntegrationHttpMethod: GET #要確認
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:476861174977:function:GetWinningInformationLambda/invocations
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetWinningInformationLambda.Arn}/invocations'
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates: 
+          "application/json": "{\n
+          \"user_id\": \"$input.params('user_id')\",\n
+          \"date\": \"$input.params('date')\"\n
+          }"
         IntegrationResponses:
           - StatusCode: 200 
             ResponseParameters:
@@ -203,13 +253,13 @@ Resources:
           application/json: 'Empty'
         ResponseParameters:
           method.response.header.Access-Control-Allow-Origin: true
-  ApiGatewayOptionsElectedMethod:
+  ApiGatewayOptionsElectedMethod: # trong変更
     Type: AWS::ApiGateway::Method
     DependsOn: GetWinningInformationLambda
     Properties:
       AuthorizationType: NONE
       RestApiId: !Ref ApiGatewayRestApi
-      ResourceId: !Ref ApiGatewayElectedResource
+      ResourceId: !Ref ApiGatewayElectedResourceDate
       HttpMethod: OPTIONS
       Integration:
         Type: MOCK
@@ -232,7 +282,7 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: false
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
-  ApiGatewayOptionsHistoriesMethod: # trong変更
+  ApiGatewayOptionsHistoriesMethod: 
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: NONE
@@ -260,7 +310,7 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: false
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
-  ApiGatewayOptionsUsageMethod: # trong変更
+  ApiGatewayOptionsUsageMethod: 
     Type: AWS::ApiGateway::Method
     DependsOn: GetWinningInformationLambda
     Properties:
@@ -313,7 +363,17 @@ Resources:
       RestApiId: !Ref ApiGatewayRestApi
       DeploymentId: !Ref RestAPIDeployment
       StageName: v1
-
+      AccessLogSetting:
+        DestinationArn: !GetAtt
+          - ApiGatewayLogGroup
+          - Arn 
+        Format: !Sub |
+          { "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user","requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath", "status":"$context.status","protocol":"$context.protocol", "responseLength":"$context.responseLength" }
+      MethodSettings: 
+      - DataTraceEnabled: True
+        LoggingLevel: INFO
+        HttpMethod: '*'
+        ResourcePath: '/*'
 #バッチ処理
   BatchProcessingLambda:
     Type: AWS::Serverless::Function
@@ -324,7 +384,7 @@ Resources:
       Role: arn:aws:iam::476861174977:role/LambdaReadDynamoRole #これ変更必要 dynamodb読み込みrole的なの
       Runtime: python3.6
       Layers: 
-        - arn:aws:lambda:ap-northeast-1:476861174977:layer:pandas:3
+        - arn:aws:lambda:ap-northeast-1:476861174977:layer:pandas:3 #用確認
       CodeUri: BatchProcessing.py      
   ScheduledRule:
     Type: AWS::Events::Rule
