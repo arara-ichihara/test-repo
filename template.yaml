@@ -8,7 +8,7 @@ Resources:
       - LambdaLayer
     Properties:
       Description: get reservation information from user
-      FunctionName: getReservationCFn
+      FunctionName: GetWinningInformationLambda
       Handler: GetWinningInformationLambda.lambda_handler
       Role: arn:aws:iam::476861174977:role/service-role/LambdaRoleGetWinningInformation
       Runtime: python3.8
@@ -45,7 +45,7 @@ Resources:
     Properties: 
       CodeUri: SetUsageConfirmationLambda.py
       Description: Lambda function of python3.7
-      FunctionName: set_usage_confirmation
+      FunctionName: SetUsageConfirmationLambda
       # 実行するファイル.関数名(default)
       Handler: SetUsageConfirmationLambda.lambda_handler # ファイル名.lambda_handler
       # dynamoDBとapi_gatewayへのアクセスを許可する下記のロールをアタッチ
@@ -87,7 +87,7 @@ Resources:
             - s3:Get* # S3からオブジェクトを取得する許可
             - s3:List*
             Resource : "*" 
-      RoleName: yoppy_api_role
+      RoleName: S3AccessRole
   ApiGatewayRestApi:  #trong変更
     Type: AWS::ApiGateway::RestApi
     Properties: 
@@ -95,7 +95,6 @@ Resources:
       EndpointConfiguration: # 作成時にデフォルトでリージョンに設定。VPCの中に設置するのでエンドポイントなどは使わないためPRIVATEにしない
         Types:
           - "REGIONAL"
-
       Policy:
         Version: 2012-10-17
         Statement:
