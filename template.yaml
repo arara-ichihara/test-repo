@@ -44,7 +44,7 @@ Resources:
         - python3.6
         - python3.7
         - python3.8
-      ContentUri: layer2
+      ContentUri: MysqlConnectorLayer
       Description: package for mysql-connector-python
       LayerName: MysqlConnectorLayer #要確認
       LicenseInfo: GPL v2.0
