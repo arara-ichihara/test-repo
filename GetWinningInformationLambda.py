@@ -1,5 +1,6 @@
 import mysql.connector
 import os
+import json
 import sys
 import traceback
 from datetime import date
@@ -7,8 +8,8 @@ from datetime import date
 def lambda_handler(event, context):
   count = 0
   status_code = 0
-  today = event["today"]
   user_id = event["user_id"]
+  date = event["date"]
   conn = mysql.connector.connect(
       user=os.environ['USER'], 
       password=os.environ['PASSWORD'], 
@@ -19,10 +20,11 @@ def lambda_handler(event, context):
   try:
       cur = conn.cursor(dictionary=True)
       cur.execute("select * from reservations join menus on (reservations.menu_id = menus.id) where menus.date='" 
-                  + today + "' and reservations.user_id='" + user_id + "';")
-      cur.fetchall()
-      count = cur.rowcount
-      if count == 1:
+                  + date + "' and reservations.user_id='" + user_id + "';")
+      result = cur.fetchall()
+      for row in result:
+          count = row["reservation_num"]
+      if count != 0:
           status_code = 200
       elif count == 0:
           status_code = 404
@@ -36,5 +38,5 @@ def lambda_handler(event, context):
 
   return {
       'statusCode': status_code,
-      'body': count
+      'body': json.dumps({"reservation_num":count})
   }  
