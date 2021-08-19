@@ -4,7 +4,7 @@ Description: APIgatewayLambda
 Resources:
   GetWinningInformationLambda:
     Type: AWS::Serverless::Function
-    DependsOn: MysqlConnectorLayer
+    DependsOn: !Ref MysqlConnectorLayer
     Properties:
       Description: get reservation information from user
       FunctionName: GetWinningInformationLambda
