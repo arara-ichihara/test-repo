@@ -383,7 +383,6 @@ Resources:
 #バッチ処理
   BatchProcessingLambda:
     Type: AWS::Serverless::Function
-    DependsOn: PandasNumpyLayer
     Properties: 
       Description: batch script for CSV file creation
       FunctionName: BatchProcessing
