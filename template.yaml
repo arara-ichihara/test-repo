@@ -4,8 +4,7 @@ Description: APIgatewayLambda
 Resources:
   GetWinningInformationLambda:
     Type: AWS::Serverless::Function
-    DependsOn: 
-      - !Ref MysqlConnectorLayer
+    DependsOn: MysqlConnectorLayer
     Properties:
       Description: get reservation information from user
       FunctionName: GetWinningInformationLambda
@@ -21,34 +20,33 @@ Resources:
           PORT: 3306
           USER: happy
       Layers: 
-      - !Ref MysqlConnectorLayer
+        - !Ref MysqlConnectorLayer
       VpcConfig:
         SecurityGroupIds:
           - sg-e42eec81
         SubnetIds:
           - subnet-385eb74f 
-  PandasNumpyLayer:
+  PandasNumpyLayer: #tama追加
     Type: AWS::Serverless::LayerVersion
     Properties: 
       CompatibleRuntimes: 
         - python3.6
         - python3.7
         - python3.8
-      ContentUri: PandasNumpyLayer
+      ContentUri: layer
       LayerName: PandasNumpyLayer
       RetentionPolicy: Delete
   MysqlConnectorLayer:
     Type: AWS::Serverless::LayerVersion
     Properties: 
-      LayerName: MysqlConnectorLayer #要確認
-      Description: package for mysql-connector-python
-      ContentUri: MysqlConnectorLayer
       CompatibleRuntimes: 
         - python3.6
         - python3.7
         - python3.8
+      ContentUri: layer2
+      Description: package for mysql-connector-python
+      LayerName: MysqlConnectorLayer #要確認
       LicenseInfo: GPL v2.0
-      RetentionPolicy: Delete
   SetUsageConfirmationLambda:
     Type: AWS::Serverless::Function
     Properties: 
@@ -385,8 +383,6 @@ Resources:
 #バッチ処理
   BatchProcessingLambda:
     Type: AWS::Serverless::Function
-    DependsOn: 
-      - !Ref PandasNumpyLayer
     Properties: 
       Description: batch script for CSV file creation
       FunctionName: BatchProcessing
