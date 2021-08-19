@@ -39,7 +39,7 @@ Resources:
   MysqlConnectorLayer:
     Type: AWS::Serverless::LayerVersion
     Properties: 
-      LayerName: MysqlConnectorLayer #要確認
+      LayerName: MysqlConnectorLayer
       Description: package for mysql-connector-python
       ContentUri: MysqlConnectorLayer
       CompatibleRuntimes: 
