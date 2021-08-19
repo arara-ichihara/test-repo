@@ -19,7 +19,7 @@ Resources:
           PORT: 3306
           USER: happy
       Layers: 
-      - MysqlConnectorLayer
+        - !Ref MysqlConnectorLayer
       VpcConfig:
         SecurityGroupIds:
           - sg-e42eec81
