@@ -33,7 +33,7 @@ Resources:
         - python3.7
         - python3.8
       ContentUri: PandasNumpyLayer
-      LayerName: PandasNumpyLayer
+      LayerName: PandasNumpyLaye
       RetentionPolicy: Delete
   MysqlConnectorLayer:
     Type: AWS::Serverless::LayerVersion
