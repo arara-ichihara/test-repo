@@ -20,7 +20,7 @@ Resources:
           PORT: 3306
           USER: happy
       Layers: 
-      - !Ref MysqlConnectorLayer
+      - MysqlConnectorLayer
       VpcConfig:
         SecurityGroupIds:
           - sg-e42eec81
@@ -393,7 +393,7 @@ Resources:
       Runtime: python3.6
       Timeout: 900
       Layers: 
-      - !Ref PandasNumpyLayer
+      -  PandasNumpyLayer
       CodeUri: BatchProcessing.py      
   ScheduledRule:
     Type: AWS::Events::Rule
