@@ -1,26 +1,20 @@
-# coding: utf-8
- 
-# ①ライブラリのimport
-import datetime
+from datetime import datetime, timedelta, timezone
 import pprint
 import json
 import decimal
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
  
-# ②Functionのロードをログに出力
-print('Loading function')
- 
-# ③DynamoDBオブジェクトを取得
+#DynamoDBオブジェクトを取得
 dynamodb = boto3.resource('dynamodb')
  
-# ④Lambdaのメイン関数
+#Lambdaのメイン関数
 def lambda_handler(event, context):
     
-    # ⑤テーブル名を指定
-    table_name = "set_usage_confirmation"
+    #テーブル名を指定
+    table_name = "YoppyServings"
  
-    # ⑦float型をdecimal型に変換
+    #float型をdecimal型に変換
     payload = {
         key: val 
         if type(val) != float 
@@ -28,21 +22,30 @@ def lambda_handler(event, context):
             for key, val in event.items()
     }
     
-    # ⑧DynamoDBテーブルのオブジェクトを取得
+    #DynamoDBテーブルのオブジェクトを取得
     dynamotable = dynamodb.Table(table_name)
     
-    # mail_adressとused_atを連結してidを作成
-    id = event["mail_address"]+event["used_at"]
+    #mail_adressとused_atを連結してidを作成
+    id = event['mail_address']+event['used_at']
     
     #payloadにid_keyとid_valをappend
     payload['id'] = id
     
+    #東京の現在時刻をcreated_atに代入
+    JST = timezone(timedelta(hours=+9), 'JST')
+    current_time = datetime.now(JST)
+    
+    #時刻のformatを修正 
+    created_at=current_time.strftime("%Y-%m-%dT%H:%M:%S")+"+09:00"
+    
+    #created_atをpayloadに追加
+    payload['created_at'] = created_at
+    
     try:
-        # ⑨DynamoDBへのデータ登録
+        #DynamoDBへのデータ登録
         res = dynamotable.put_item(
             Item = payload
         )
-        print("Succeeded.")
         
         pprint.pprint(event)
         pprint.pprint(payload)
