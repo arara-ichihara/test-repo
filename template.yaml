@@ -401,7 +401,8 @@ Resources:
       ScheduleExpression: "cron(0 16 L * ? *)"  #AWS uses UTC timezone
       State: "ENABLED"
       Targets: 
-        - Arn: 
+        - 
+          Arn: 
             Fn::GetAtt: 
             - "BatchProcessingLambda"
             - "Arn"
