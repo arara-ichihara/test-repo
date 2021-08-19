@@ -177,13 +177,13 @@ Resources:
       Properties:
         RestApiId: !Ref ApiGatewayRestApi
         ParentId: !Ref ApiGatewayHistoriesResource
-        PathPart: {grouping}
+        PathPart: '{grouping}'
   ApiGatewayLatestResource:
       Type: AWS::ApiGateway::Resource
       Properties:
         RestApiId: !Ref ApiGatewayRestApi
         ParentId: !Ref ApiGatewayMonthlyResource
-        PathPart: {target}
+        PathPart: '{target}'
   ApiGatewayUsageResource:
       Type: AWS::ApiGateway::Resource
       Properties:
