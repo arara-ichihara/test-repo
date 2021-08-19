@@ -391,7 +391,7 @@ Resources:
       Runtime: python3.6
       Timeout: 900
       Layers: 
-      -  PandasNumpyLayer
+      - PandasNumpyLayer
       CodeUri: BatchProcessing.py      
   ScheduledRule:
     Type: AWS::Events::Rule
