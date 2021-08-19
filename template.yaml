@@ -61,9 +61,9 @@ Resources:
 
   LambdaPermission:
       Type: AWS::Lambda::Permission
-      DependsOn: get_winning_information_lambda
+      DependsOn: GetWinningInformationLambda
       Properties:
-        FunctionName: !Ref get_winning_information_lambda
+        FunctionName: !Ref GetWinningInformationLambda
         Action: lambda:InvokeFunction 
         Principal: apigateway.amazonaws.com 
         SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/GET/elected/*/*
@@ -260,7 +260,7 @@ Resources:
           method.response.header.Access-Control-Allow-Origin: true
   ApiGatewayOptionsElectedMethod: # trong変更
     Type: AWS::ApiGateway::Method
-    DependsOn: get_winning_information_lambda
+    DependsOn: GetWinningInformationLambda
     Properties:
       AuthorizationType: NONE
       RestApiId: !Ref ApiGatewayRestApi
@@ -317,7 +317,7 @@ Resources:
             method.response.header.Access-Control-Allow-Origin: false
   ApiGatewayOptionsUsageMethod: 
     Type: AWS::ApiGateway::Method
-    DependsOn: get_winning_information_lambda
+    DependsOn: GetWinningInformationLambda
     Properties:
       AuthorizationType: NONE
       RestApiId: !Ref ApiGatewayRestApi
@@ -403,7 +403,7 @@ Resources:
         - 
           Arn: 
             Fn::GetAtt: 
-            - "batch_processing_lambda"
+            - "BatchProcessingLambda"
             - "Arn"
           Id: "TargetFunctionV1"
           #Input: !Sub |
@@ -411,7 +411,7 @@ Resources:
   PermissionForEventsToInvokeLambda: #add EventBridge to Lambda trigger
     Type: AWS::Lambda::Permission
     Properties: 
-      FunctionName: !Ref "batch_processing_lambda"
+      FunctionName: !Ref "BatchProcessingLambda"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: 
