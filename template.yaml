@@ -132,7 +132,10 @@ Resources:
         - Effect: Deny
           Principal: "*"
           Action: execute-api:Invoke
-          Resource: "execute-api:/*/*/*"  #electedリソースの場合：execute-api:/*/GET/elected/*/*
+          Resource: [
+                "execute-api:/*/*/*",
+                "s3://yoppy-csv-log/*/*/*"
+            ]  #electedリソースの場合：execute-api:/*/GET/elected/*/*
           Condition:
             StringNotEquals:
               aws:SourceVpce: vpce-0a8244b81e7b4a1b7
@@ -220,7 +223,7 @@ Resources:
         Type: AWS
         IntegrationHttpMethod: GET
         Credentials: !GetAtt S3AccessRole.Arn
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:path/yoppy-csv-log/monthly/latest/yoppy_log"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:s3:::yoppy-csv-log:path/monthly/latest/yoppy_log" #s3:path/yoppy-csv-log/monthly/latest/yoppy_log
         IntegrationResponses:
           - StatusCode: 200 # backendのプロセスが完了した時のレスポンスコード
       MethodResponses:
