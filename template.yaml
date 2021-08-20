@@ -59,7 +59,7 @@ Resources:
       Role: arn:aws:iam::476861174977:role/SetUsageConfirmationLambdaRole # 下記で設定するIAMロールを設定
       Runtime: python3.8    
 
-  LambdaPermission:
+  GetWinningInformationLambdaPermission:
       Type: AWS::Lambda::Permission
       DependsOn: GetWinningInformationLambda
       Properties:
@@ -67,7 +67,16 @@ Resources:
         Action: lambda:InvokeFunction 
         Principal: apigateway.amazonaws.com 
         SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/GET/elected/*/*
-
+  
+  SetUsageConfirmationLambdaPermission:
+    Type: AWS::Lambda::Permission
+      DependsOn: SetUsageConfirmationLambda
+      Properties:
+        FunctionName: !Ref SetUsageConfirmationLambda
+        Action: lambda:InvokeFunction 
+        Principal: apigateway.amazonaws.com 
+        SourceArn: !Sub arn:aws:execute-api:ap-northeast-1:476861174977:${ApiGatewayRestApi}/*/PUT/usage
+        
   S3AccessRole:
     Type: AWS::IAM::Role
     Properties:
