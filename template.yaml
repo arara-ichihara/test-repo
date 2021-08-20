@@ -239,7 +239,7 @@ Resources:
       Integration: # httpではなくlambdaを選択するため例とは異なる
         Type: AWS
         IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${get_winning_information_lambda.Arn}/invocations'
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetWinningInformationLambda.Arn}/invocations'
         PassthroughBehavior: WHEN_NO_TEMPLATES
         RequestTemplates: 
           "application/json": "{\n
